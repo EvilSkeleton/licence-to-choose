@@ -8,6 +8,12 @@ let THEME = 'dark';
 try{ THEME = localStorage.getItem('ltc-theme') || 'dark'; }catch(e){}
 document.documentElement.dataset.theme = THEME;
 
+/* Spoken-line highlighting: words light up as the voice reaches them. */
+const SAY = {key:'', n:-1};
+function karaoke(text, key){ return text.split(/\s+/).map((w,i)=>`<span class="kw${SAY.key===key && i<=SAY.n ? ' on' : ''}" data-k="${key}">${w}</span>`).join(' '); }
+function sayHook(key){ SAY.key = key; SAY.n = -1; document.querySelectorAll(`.kw[data-k="${key}"]`).forEach(w=>w.classList.remove('on'));
+  return n => { SAY.n = n; document.querySelectorAll(`.kw[data-k="${key}"]`).forEach((w,j)=>{ if(j<=n) w.classList.add('on'); }); }; }
+
 function spend(h){ if(h>0){ S.hours = Math.max(0, S.hours - h); FX.tick(); } }
 function travel(i){
   const g = SCENES[S.scene].go[i]; if(!g) return;
@@ -18,7 +24,7 @@ function travel(i){
   if(to==='yacht') spend(3);
   FX.whoosh(); render(); window.scrollTo({top:0,behavior:'smooth'});
   const sc = SCENES[to];
-  if(sc.quote) setTimeout(()=>speak(sc.speaker, sc.quote), 500);
+  if(sc.quote) sayLater(500, ()=>speak(sc.speaker, sc.quote, null, sayHook('q:'+to)));
 }
 function ask(i){
   const sc = SCENES[S.scene], a = sc.ask[i];
@@ -33,7 +39,7 @@ function ask(i){
   if(S.hours<=0 && S.scene!=='island'){ S.timeUp = true; }
   render();
   const say = a.speaker ? (a.reply + (a.clue && CLUES[a.clue].text.startsWith('"') ? ' ' + CLUES[a.clue].text : '')) : null;
-  if(say) speak(a.speaker, say);
+  if(say) speak(a.speaker, say, null, sayHook('r:'+S.scene));
 }
 function forceAccuse(){ S.scene='accuse'; S.path.push('accuse'); S.last=null; S.enter=true; FX.stamp(); render(); }
 
@@ -47,7 +53,7 @@ function verdict(){
 function accuse(){
   S.accused = S.suspect; S.screen = 'ending'; hush(); FX.stamp(); setTimeout(FX.sting, 300);
   render(); window.scrollTo({top:0,behavior:'smooth'});
-  const e = endingInfo(); setTimeout(()=>speak(e.quote[0], e.quote[1]), 1200);
+  const e = endingInfo(); sayLater(1200, ()=>speak(e.quote[0], e.quote[1], null, sayHook('end')));
 }
 
 /* =====================================================================
@@ -105,7 +111,7 @@ function sceneView(){
         <div class="opts">${sc.ask.map((a,i)=>`<button class="opt ask" data-a="ask" data-i="${i}"><span class="k">${'ABC'[i]}</span><span class="t">${a.t}</span><span class="s">${S.scene==='island'?'You only get one chance':'Ask or search'}</span></button>`).join('')}</div>`;
     } else if(S.last){
       const l = S.last;
-      mid += l.speaker ? `<blockquote class="quote">${l.reply}<cite>${l.speaker}</cite></blockquote>` : `<p class="story">${l.reply}</p>`;
+      mid += l.speaker ? `<blockquote class="quote">${karaoke(l.reply,'r:'+S.scene)}<cite>${l.speaker}</cite></blockquote>` : `<p class="story">${l.reply}</p>`;
       mid += l.clue ? `<div class="found"><span class="fico">${ico(CLUEICON[l.clue],26)}</span><div><small>Filed to the evidence tray · ${CLUES[l.clue].name}</small>${CLUES[l.clue].text}</div></div>` : `<div class="nothing">Nothing useful. That cost you time.</div>`;
     } else {
       mid += `<div class="nothing">You've already investigated here.</div>`;
@@ -125,7 +131,7 @@ function sceneView(){
       <div class="eyebrow">${sc.place}</div>
       <h2>${sc.title}</h2>
       <p class="story">${sc.text}</p>
-      ${sc.quote && asked===undefined ? `<blockquote class="quote">${sc.quote}<cite>${sc.speaker}</cite></blockquote>` : ''}
+      ${sc.quote && asked===undefined ? `<blockquote class="quote">${karaoke(sc.quote,'q:'+S.scene)}<cite>${sc.speaker}</cite></blockquote>` : ''}
       ${mid}
       ${travelBlock}
     </div></section>${notebook()}</div>`;
@@ -197,7 +203,7 @@ function endingView(){
     <div class="eyebrow"><span class="ending-kicker">${e.kicker}</span> · You accused ${SUSPECTS[S.accused].name}</div>
     <h1>${e.title}</h1>
     <p class="story">${e.text}</p>
-    <blockquote class="quote">${e.quote[1]}<cite>${e.quote[0]}</cite></blockquote>
+    <blockquote class="quote">${karaoke(e.quote[1],'end')}<cite>${e.quote[0]}</cite></blockquote>
     <div class="stats">
       <div class="stat"><b>${START_HOURS - S.hours}h</b><span>hours used</span></div>
       <div class="stat"><b>${S.path.length-1}</b><span>places visited</span></div>
@@ -256,7 +262,7 @@ function render(){
 /* =====================================================================
    EVENTS
    ===================================================================== */
-function beginGame(){ hush(); clearTimeout(introTimer); clearInterval(digitTimer); S.screen='play'; S.scene='brief'; S.enter=true; musicStart(); FX.stamp(); render(); window.scrollTo({top:0,behavior:'smooth'}); setTimeout(()=>speak('M', SCENES.brief.quote), 600); }
+function beginGame(){ hush(); clearTimeout(introTimer); clearInterval(digitTimer); S.screen='play'; S.scene='brief'; S.enter=true; musicStart(); FX.stamp(); render(); window.scrollTo({top:0,behavior:'smooth'}); sayLater(600, ()=>speak('M', SCENES.brief.quote, null, sayHook('q:brief'))); }
 document.addEventListener('click', e=>{
   const b = e.target.closest('[data-a]'); if(!b || b.disabled) return;
   const a = b.dataset.a;

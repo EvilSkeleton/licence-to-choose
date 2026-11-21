@@ -36,7 +36,11 @@ function introPlay(i){
     digitTimer = setInterval(()=>{ t -= 41; const e = el(); if(!e) return clearInterval(digitTimer);
       const h = Math.floor(t/3600), m = Math.floor(t%3600/60), s = t%60; e.textContent = [h,m,s].map(n=>String(n).padStart(2,'0')).join(':'); }, 60);
   }
-  introTimer = setTimeout(()=>speak(sh.who, sh.line, ()=>{ if(S.screen==='intro' && introI===i) introPlay(i+1); }), 900);
+  const total = wordsOf(sh.line);
+  introTimer = setTimeout(()=>speak(sh.who, sh.line, ()=>{ if(S.screen==='intro' && introI===i) introPlay(i+1); }, n=>{
+    document.querySelectorAll('.subs .w').forEach((w,j)=>{ if(j<=n) w.classList.add('on'); });
+    const bar = document.querySelector('.prog i'); if(bar) bar.style.transform = `scaleX(${(n+1)/total})`;
+  }), 900);
 }
 function introSkip(){ clearTimeout(introTimer); clearInterval(digitTimer); hush(); introPlay(SHOTS.length-1); }
 
@@ -51,7 +55,7 @@ function introView(){
       <h1>${'Licence'.split('').map((c,i)=>`<i style="animation-delay:${.5+i*.06}s">${c}</i>`).join('')} <span>${'to'.split('').map((c,i)=>`<i style="animation-delay:${.95+i*.06}s">${c}</i>`).join('')}</span> ${'Choose'.split('').map((c,i)=>`<i style="animation-delay:${1.1+i*.06}s">${c}</i>`).join('')}</h1>
       <p class="tc-sub">24 HOURS · 4 SUSPECTS · 1 TRUTH</p></div></div>`;
   } else {
-    const words = sh.line.split(' ').map((w,i)=>`<span class="w" style="animation-delay:${(.9+i*.27).toFixed(2)}s">${w}</span>`).join(' ');
+    const words = sh.line.split(' ').map(w=>`<span class="w">${w}</span>`).join(' ');
     inner = `<div class="cap" style="--n:${sh.cap.length}">${sh.cap}</div>
       ${sh.big?`<div class="big ${sh.big.cls}" id="bigdigits">${sh.big.text}</div>`:''}
       ${sh.stamp?`<div class="cstamp">${sh.stamp}</div>`:''}
@@ -64,7 +68,7 @@ function introView(){
       <div class="grain"></div><div class="flare"></div><div class="vig"></div>
       <div class="lbox top"></div><div class="lbox bot"></div>
       ${inner}
-      ${sh.title?'':`<div class="prog"><i style="animation-duration:${dur}s"></i></div>`}
+      ${sh.title?'':`<div class="prog"><i class="${sh.pre?'auto':''}" style="animation-duration:${dur}s"></i></div>`}
     </div>
     <div class="cine-bar"><div class="dots">${SHOTS.map((_,i)=>`<i class="${i<introI?'done':i===introI?'on':''}"></i>`).join('')}</div>
       <div class="row">${sh.title?`<button class="cine-btn" data-a="replay">Watch again</button><button class="cine-btn main" data-a="begin">Begin the investigation</button>`:`<button class="cine-btn" data-a="skip">Skip</button>`}</div></div>

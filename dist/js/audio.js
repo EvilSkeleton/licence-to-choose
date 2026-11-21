@@ -106,32 +106,55 @@ function voiceFor(who){
   return use.length ? use[(c.pick||0) % use.length] : null;
 }
 let speakToken = 0;
-function speak(who, text, done){
+/* speak(who, text, done, onWord)
+   onWord(n) is called as each word is spoken (n = 0-based word index in `text`), so
+   subtitles and highlights follow the actual voice instead of a guessed timer.
+   Exact word events are used when the voice provides them; otherwise each sentence
+   start re-syncs a paced timer, and the final word is always shown when speech ends. */
+function speak(who, text, done, onWord){
   const token = ++speakToken;
-  const finish = () => { if(token===speakToken){ duck(false); done && done(); } };
-  if(!AUDIO.voice || !TTS || !text){ setTimeout(finish, Math.max(2200, text ? text.split(' ').length*330+900 : 1500)); return; }
+  const words = text ? text.trim().split(/\s+/).length : 0;
+  let tick = null, shown = -1;
+  const show = n => { if(token!==speakToken) return; n = Math.min(n, words-1); if(n>shown){ shown = n; onWord && onWord(n); } };
+  const ticker = (from, ms, until) => { clearInterval(tick); let i = from; show(i);
+    tick = setInterval(()=>{ if(token!==speakToken || i+1>until){ clearInterval(tick); return; } show(++i); }, ms); };
+  const finish = () => { clearInterval(tick); if(token===speakToken){ show(words-1); duck(false); done && done(); } };
+  if(!AUDIO.voice || !TTS || !text){ if(text) ticker(0, 330, words-1); setTimeout(finish, Math.max(2200, text ? words*330+900 : 1500)); return; }
   try{
     TTS.cancel();
     const clean = text.replace(/[“”"]/g,'').replace(/\b007\b/g,'double-oh-seven');
     const c = CAST[who] || CAST.Narrator, v = voiceFor(who);
-    /* Neural voices sound robotic when pitch-shifted hard, so soften the character tweaks. */
     const hq = !!v && voiceScore(v) >= 7;
     const basePitch = 1 + (c.pitch-1)*(hq ? .35 : 1), baseRate = 1 + (c.rate-1)*(hq ? .6 : 1);
-    /* Speak sentence by sentence with small shifts in pace and pitch so lines have some shape
-       (this also stops Chrome cutting long lines off after ~15 seconds). */
-    const parts = clean.match(/[^.!?…]+[.!?…]*\s*/g) || [clean];
-    let left = parts.length, ended = false;
-    parts.forEach((p,i)=>{
-      const u = new SpeechSynthesisUtterance(p.trim());
+    /* Online voices (Google, Edge Natural) fetch audio per utterance, so splitting adds lag
+       between sentences: send them one utterance. Local voices are split by sentence. */
+    const local = !v || v.localService !== false;
+    const parts = local ? (clean.match(/[^.!?…]+[.!?…]*\s*/g) || [clean]) : [clean];
+    const counts = parts.map(p => p.trim().split(/\s+/).filter(Boolean).length);
+    const offs = counts.map((_,i) => counts.slice(0,i).reduce((a,b)=>a+b,0));
+    const msw = Math.round(370 / baseRate);
+    let left = parts.length, ended = false, exact = false;
+    const utts = parts.map((p,i)=>{
+      const said = p.trim(), u = new SpeechSynthesisUtterance(said);
       if(v){ u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
-      const q = /\?\s*$/.test(p), ex = /!\s*$/.test(p), last = i===parts.length-1;
-      u.pitch = Math.max(.1, basePitch + (q?.06:0) + (ex?.04:0) + (i%2?-.03:.02) - (last&&!q?.03:0));
-      u.rate = baseRate * (last ? .95 : (i%2 ? 1.03 : 1));
-      u.onend = u.onerror = () => { if(--left<=0 && !ended){ ended = true; setTimeout(finish, 450); } };
-      TTS.speak(u);
+      const q = /\?\s*$/.test(p), ex = /!\s*$/.test(p), last = i===parts.length-1, vary = parts.length>1;
+      u.pitch = Math.max(.1, basePitch + (vary ? (q?.06:0) + (ex?.04:0) + (i%2?-.03:.02) - (last&&!q?.03:0) : 0));
+      u.rate = baseRate * (vary ? (last ? .95 : (i%2 ? 1.03 : 1)) : 1);
+      u.onstart = () => { if(exact) show(offs[i]); else ticker(offs[i], msw, offs[i]+counts[i]-1); };
+      u.onboundary = e => { if(e.name && e.name!=='word') return; exact = true; clearInterval(tick);
+        show(offs[i] + said.slice(0, e.charIndex).split(/\s+/).filter(Boolean).length); };
+      u.onend = u.onerror = () => { show(offs[i]+counts[i]-1); if(--left<=0 && !ended){ ended = true; setTimeout(finish, 350); } };
+      return u;
     });
     duck(true);
-    setTimeout(()=>{ if(!ended){ ended = true; finish(); } }, text.split(' ').length*520 + 3500);
+    /* Chrome can drop or stall speech queued in the same tick as cancel(): wait a beat. */
+    setTimeout(()=>{ if(token===speakToken) utts.forEach(u=>TTS.speak(u)); }, 60);
+    setTimeout(()=>{ if(!ended){ ended = true; finish(); } }, words*600 + 4000);
   }catch(e){ setTimeout(finish, 2500); }
 }
-function hush(){ speakToken++; try{ TTS && TTS.cancel(); }catch(e){} duck(false); }
+/* Delayed lines go through sayLater so moving on (hush) cancels them before they start. */
+let sayTimer = null;
+function sayLater(ms, fn){ clearTimeout(sayTimer); sayTimer = setTimeout(fn, ms); }
+function hush(){ clearTimeout(sayTimer); speakToken++; try{ TTS && TTS.cancel(); }catch(e){} duck(false);
+  /* anything left half-highlighted is shown in full */
+  if(typeof SAY!=='undefined') SAY.n = 1e9; document.querySelectorAll('.kw:not(.on)').forEach(w=>w.classList.add('on')); }

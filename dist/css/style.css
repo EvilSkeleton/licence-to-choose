@@ -306,8 +306,10 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .subs{position:absolute;z-index:6;left:50%;bottom:calc(8.5% + 12px);transform:translateX(-50%);width:min(92%,880px);text-align:center}
 .subs .who{display:table;margin:0 auto 4px;background:rgba(0,0,0,.82);padding:1px 10px;font-family:var(--font-display);font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:clamp(.78rem,1.7vw,1.05rem);color:#e6c477;animation:fade .5s ease both .2s}
 .subs .line{display:inline;background:rgba(0,0,0,.74);padding:2px 8px;font-size:clamp(.92rem,2.3vw,1.4rem);line-height:1.7;-webkit-box-decoration-break:clone;box-decoration-break:clone;color:#fff}
-.subs .w{display:inline-block;animation:word .45s ease both}
-@keyframes word{from{opacity:0;transform:translateY(8px);filter:blur(4px)}}
+.subs .w{display:inline-block;opacity:0;transform:translateY(8px);filter:blur(4px);transition:opacity .25s ease,transform .25s ease,filter .25s ease}
+.subs .w.on{opacity:1;transform:none;filter:none}
+.kw{opacity:.4;transition:opacity .2s ease}
+.kw.on{opacity:1}
 .big{position:absolute;z-index:5;left:8%;top:30%;font-family:var(--font-display);font-weight:900;font-size:clamp(2.6rem,11vw,8rem);line-height:.9;letter-spacing:.04em;font-variant-numeric:tabular-nums;animation:bigin 1.2s cubic-bezier(.2,.8,.2,1) .4s both;mix-blend-mode:screen}
 .big.red{color:#ff4a3a;text-shadow:0 0 28px rgba(255,74,58,.8)}
 .big.gold{color:#e6c477;text-shadow:0 0 28px rgba(230,196,119,.7);letter-spacing:.2em;font-size:clamp(2.2rem,9vw,6.5rem);right:8%;top:18%}
@@ -327,7 +329,8 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .eyes .load{width:min(60vw,320px);height:3px;margin:6px auto 0;background:#2a2e38;overflow:hidden}
 .eyes .load i{display:block;height:100%;background:#d8b768;animation:prog 2.6s ease-in-out .6s both;transform-origin:left}
 .prog{position:absolute;z-index:7;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.12)}
-.prog i{display:block;height:100%;width:100%;background:var(--brass);transform-origin:left;animation:prog linear both}
+.prog i{display:block;height:100%;width:100%;background:var(--brass);transform-origin:left;transform:scaleX(0);transition:transform .35s ease}
+.prog i.auto{transform:none;animation:prog linear both}
 @keyframes prog{from{transform:scaleX(0)}}
 .titlecard{position:absolute;inset:0;z-index:6;display:grid;place-items:center;text-align:center;padding:20px}
 .iris{position:absolute;inset:0;background:radial-gradient(circle,rgba(216,183,104,.22),transparent 55%);animation:irisin 2s ease-out both}
@@ -363,5 +366,6 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
   .big{top:26%}
 }
 @media (prefers-reduced-motion: reduce){
+  .subs .w{opacity:1;transform:none;filter:none}
   *,*::before,*::after{animation-duration:.001s!important;animation-iteration-count:1!important;transition:none!important}
 }
