@@ -107,7 +107,7 @@ function speak(who, text, done){
   if(!AUDIO.voice || !TTS || !text){ setTimeout(finish, Math.max(2200, text ? text.split(' ').length*330+900 : 1500)); return; }
   try{
     TTS.cancel();
-    const u = new SpeechSynthesisUtterance(text.replace(/[“”"]/g,''));
+    const u = new SpeechSynthesisUtterance(text.replace(/[“”"]/g,'').replace(/007/g,'double-oh-seven'));
     const c = CAST[who] || CAST.Narrator, v = voiceFor(who);
     if(v){ u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
     u.pitch = c.pitch; u.rate = c.rate;

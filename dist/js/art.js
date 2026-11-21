@@ -114,7 +114,7 @@ function art(kind, o={}){
      <rect y="226" width="800" height="54" fill="#0a0d12"/><rect y="226" width="800" height="2" fill="#4a5262" opacity=".6"/>
      <rect y="262" width="800" height="12" fill="url(#tape)" opacity=".85"/>
      <g transform="translate(250 240)"><ellipse rx="4" ry="2" fill="#c9a24a"/><path class="glint" d="M0 -9 L1.2 -1.2 L9 0 L1.2 1.2 L0 9 L-1.2 1.2 L-9 0 L-1.2 -1.2z" fill="#fff3c4"/></g>
-     ${o.thief ? `<g class="walkout">${man(300,232,.74,{cane:1,long:1,fill:'#010203',rim:'rgba(123,224,168,.7)'})}</g>` : `
+     ${o.thief ? `<g class="walkout">${man(300,232,.74,{fill:'#010203',rim:'rgba(123,224,168,.35)'})}</g>` : `
      <g class="sweep" style="transform-origin:96px 38px;animation-duration:2.2s"><polygon points="96,38 -40,16 -40,66" fill="#ff4a3a" opacity=".32"/><polygon points="96,38 232,16 232,66" fill="#ff4a3a" opacity=".32"/></g>
      <circle class="alarm" cx="96" cy="38" r="46" fill="#d42a1e" opacity=".5"/><circle cx="96" cy="38" r="10" fill="#ff5b4a"/><rect x="84" y="46" width="24" height="8" fill="#222"/>
      <g class="sweepS" style="transform-origin:142px 200px"><polygon points="142,200 300,212 300,246" fill="url(#torch)"/></g>${man(122,246,.62,{guard:1})}<rect x="136" y="196" width="9" height="5" rx="1" fill="#222" transform="rotate(8 140 198)"/>`}`,
