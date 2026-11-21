@@ -90,15 +90,20 @@ const CAST = {
   'Q':               {sex:'m', pitch:1.15,rate:1.05, pick:1},
   'Night guard':     {sex:'m', pitch:1.05,rate:1.05, pick:2}
 };
+/* Rank voices so the most human-sounding ones win: neural "Natural" voices (Edge),
+   Google network voices (Chrome), then enhanced/premium system voices (Safari). */
+const voiceScore = v => (/natural|neural/i.test(v.name)?8:0) + (/online/i.test(v.name)?3:0) + (/google/i.test(v.name)?4:0)
+  + (/premium|enhanced/i.test(v.name)?4:0) + (/GB|UK|United Kingdom/i.test(v.lang+v.name)?2:/en-(US|AU|IE)/i.test(v.lang)?1:0);
+const isF = v => /female|hazel|susan|libby|sonia|maisie|hollie|abbie|bella|mia|olivia|emma|amy|ava|kate|serena|zira|aria|jenny|samantha|karen|moira|tessa|fiona|natasha|clara|heera|kalpana|catherine|linda|eva|michelle|nicole|laura|ruth|veena|susan|joanna|kimberly|salli|ivy|emily|ellie|lily|isla|ana/i.test(v.name);
 function voiceFor(who){
   const c = CAST[who] || CAST.Narrator;
-  const en = VOICES.filter(v=>/^en/i.test(v.lang));
-  const gb = en.filter(v=>/GB|UK|United Kingdom/i.test(v.lang+v.name));
-  const isF = v => /female|hazel|susan|libby|sonia|maisie|kate|serena|zira|aria|jenny|samantha|karen|moira|tessa|fiona/i.test(v.name);
-  const pool = (gb.length?gb:en);
+  const en = VOICES.filter(v=>/^en/i.test(v.lang)).sort((a,b)=>voiceScore(b)-voiceScore(a));
+  const best = en.length ? voiceScore(en[0]) : 0;
+  const pool = en.filter(v => voiceScore(v) >= best - 2);   /* only the top-quality tier */
   const bySex = pool.filter(v => c.sex==='f' ? isF(v) : !isF(v));
-  const list = bySex.length ? bySex : pool;
-  return list.length ? list[(c.pick||0) % list.length] : null;
+  const list = bySex.length ? bySex : en.filter(v => c.sex==='f' ? isF(v) : !isF(v));
+  const use = list.length ? list : en;
+  return use.length ? use[(c.pick||0) % use.length] : null;
 }
 let speakToken = 0;
 function speak(who, text, done){
@@ -107,13 +112,25 @@ function speak(who, text, done){
   if(!AUDIO.voice || !TTS || !text){ setTimeout(finish, Math.max(2200, text ? text.split(' ').length*330+900 : 1500)); return; }
   try{
     TTS.cancel();
-    const u = new SpeechSynthesisUtterance(text.replace(/[“”"]/g,'').replace(/007/g,'double-oh-seven'));
+    const clean = text.replace(/[“”"]/g,'').replace(/\b007\b/g,'double-oh-seven');
     const c = CAST[who] || CAST.Narrator, v = voiceFor(who);
-    if(v){ u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
-    u.pitch = c.pitch; u.rate = c.rate;
-    let ended = false;
-    u.onend = u.onerror = () => { if(!ended){ ended = true; setTimeout(finish, 450); } };
-    duck(true); TTS.speak(u);
+    /* Neural voices sound robotic when pitch-shifted hard, so soften the character tweaks. */
+    const hq = !!v && voiceScore(v) >= 7;
+    const basePitch = 1 + (c.pitch-1)*(hq ? .35 : 1), baseRate = 1 + (c.rate-1)*(hq ? .6 : 1);
+    /* Speak sentence by sentence with small shifts in pace and pitch so lines have some shape
+       (this also stops Chrome cutting long lines off after ~15 seconds). */
+    const parts = clean.match(/[^.!?…]+[.!?…]*\s*/g) || [clean];
+    let left = parts.length, ended = false;
+    parts.forEach((p,i)=>{
+      const u = new SpeechSynthesisUtterance(p.trim());
+      if(v){ u.voice = v; u.lang = v.lang; } else u.lang = 'en-GB';
+      const q = /\?\s*$/.test(p), ex = /!\s*$/.test(p), last = i===parts.length-1;
+      u.pitch = Math.max(.1, basePitch + (q?.06:0) + (ex?.04:0) + (i%2?-.03:.02) - (last&&!q?.03:0));
+      u.rate = baseRate * (last ? .95 : (i%2 ? 1.03 : 1));
+      u.onend = u.onerror = () => { if(--left<=0 && !ended){ ended = true; setTimeout(finish, 450); } };
+      TTS.speak(u);
+    });
+    duck(true);
     setTimeout(()=>{ if(!ended){ ended = true; finish(); } }, text.split(' ').length*520 + 3500);
   }catch(e){ setTimeout(finish, 2500); }
 }
