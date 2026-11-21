@@ -3,17 +3,18 @@
    captions, suspect tags, a ticking clock and a title reveal.
    ===================================================================== */
 const SHOTS = [
+  {art:'title', pre:true},
   {art:'london', cam:'in',  cap:'LONDON · 02:14 AM', who:'Narrator', big:{text:'02:14', cls:'red'},
    line:"London. Three nights ago. Fourteen minutes past two in the morning."},
-  {art:'vault',  cam:'in',  cap:'MI6 · VAULT LEVEL -4', who:'Narrator', stamp:'BREACH',
+  {art:'vault',  cam:'r', opts:{thief:true}, cap:'MI6 · VAULT LEVEL -4 · 02:14', who:'Narrator', stamp:'BREACH',
    line:"Someone opened the MI6 vault and walked out with the launch key for Project Halo, Britain's spy satellite."},
   {art:'orbit',  cam:'out', cap:"M · VOICE OVER", who:'M', big:{text:'HALO', cls:'gold'},
    line:"Whoever holds that key can blind every British satellite in the sky. I want it back, 007. And I want to know who took it."},
-  {art:'office', cam:'r', opts:{cast:'both'}, cap:"M'S OFFICE · 08:00", who:'Sir Edmund Crane',
+  {art:'office', cam:'r', opts:{cast:'both'}, cap:"M'S OFFICE · 08:00", who:'Sir Edmund Crane', tag:{k:"M'S CHIEF OF STAFF", n:'Sir Edmund Crane', s:'Wants you in Monaco tonight'},
    line:"It's obviously Viktor Kael. Arms dealer. Runs a casino in Monte Carlo. Get on a plane tonight, 007. There's no need to waste time here."},
   {art:'casino', cam:'in', cap:'MONTE CARLO · CASINO', who:'Narrator', tag:{k:'SUSPECT 01', n:'Viktor Kael', s:'Arms dealer'},
    line:"Viktor Kael. He buys and sells anything that can start a war."},
-  {art:'harbour',cam:'l',  cap:'MONTE CARLO · HARBOUR', who:'Narrator', tag:{k:'SUSPECT 02', n:'Elena Voss', s:"Kael's accountant"},
+  {art:'harbour',cam:'in',  cap:'MONTE CARLO · HARBOUR', who:'Narrator', tag:{k:'SUSPECT 02', n:'Elena Voss', s:"Kael's accountant"},
    line:"His accountant, Elena Voss, knows where every penny goes. Lately, she looks ready to run."},
   {art:'flight', cam:'in', cap:"M'S OFFICE · 08:05", who:'M', big:{text:'24:00:00', cls:'count', count:true},
    line:"You have twenty-four hours before the key is sold on. Follow the evidence, 007. Not the obvious answer."},
@@ -21,13 +22,14 @@ const SHOTS = [
 ];
 let introI = 0, introTimer = null, digitTimer = null;
 const wordsOf = s => s.split(' ').length;
-const shotDur = sh => sh.title ? 6 : Math.max(5, wordsOf(sh.line)*.36 + 2.4);
+const shotDur = sh => sh.title ? 6 : sh.pre ? 3.8 : Math.max(5, wordsOf(sh.line)*.36 + 2.4);
 
 function introPlay(i){
   introI = i; clearTimeout(introTimer); clearInterval(digitTimer); hush();
   render();
   const sh = SHOTS[i];
   if(sh.title){ FX.sting(); return; }
+  if(sh.pre){ setTimeout(FX.stamp, 900); introTimer = setTimeout(()=>{ if(S.screen==='intro' && introI===i) introPlay(i+1); }, 3800); return; }
   FX.whoosh();
   if(sh.big && sh.big.count){
     let t = 24*3600; const el = () => document.getElementById('bigdigits');
@@ -41,7 +43,9 @@ function introSkip(){ clearTimeout(introTimer); clearInterval(digitTimer); hush(
 function introView(){
   const sh = SHOTS[introI], dur = shotDur(sh).toFixed(1);
   let inner;
-  if(sh.title){
+  if(sh.pre){
+    inner = `<div class="eyes"><p>MI6 · SECURE CHANNEL · 08:00 GMT</p><h3>EYES ONLY</h3><p class="typed">INCOMING BRIEFING FOR AGENT 007</p><div class="load"><i></i></div></div>`;
+  } else if(sh.title){
     inner = `<div class="titlecard"><div class="iris"></div><div class="tc-in">
       <p class="tc-top">MI6 · CASE FILE 007</p>
       <h1>${'Licence'.split('').map((c,i)=>`<i style="animation-delay:${.5+i*.06}s">${c}</i>`).join('')} <span>${'to'.split('').map((c,i)=>`<i style="animation-delay:${.95+i*.06}s">${c}</i>`).join('')}</span> ${'Choose'.split('').map((c,i)=>`<i style="animation-delay:${1.1+i*.06}s">${c}</i>`).join('')}</h1>

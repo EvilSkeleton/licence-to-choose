@@ -102,6 +102,15 @@ img{max-width:100%}
 .step{animation:step 3.2s ease-in-out infinite alternate}
 @keyframes step{from{transform:translateX(0)}to{transform:translateX(52px)}}
 .drawin{animation:drawin 4s ease forwards .6s}
+.sweepS{animation:sweepS 4s ease-in-out infinite alternate}
+@keyframes sweepS{from{transform:rotate(-7deg)}to{transform:rotate(9deg)}}
+.walkout{animation:walkout 8s linear .6s both}
+@keyframes walkout{0%{transform:translateX(0);opacity:0}8%{opacity:1}100%{transform:translateX(-360px);opacity:1}}
+.approach{animation:approach 26s ease-out infinite}
+@keyframes approach{0%{transform:translateX(-80px);opacity:0}6%{opacity:1}85%{opacity:1}100%{transform:translateX(420px);opacity:0}}
+.run{animation:run 2.6s linear infinite}
+@keyframes run{0%{transform:translateX(0);opacity:0}10%{opacity:1}90%{opacity:1}100%{transform:translateX(64px);opacity:0}}
+
 @keyframes drawin{to{stroke-dashoffset:0}}
 
 /* ===== sheet / dossier ===== */
@@ -292,8 +301,8 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .flare{position:absolute;inset:0;z-index:3;pointer-events:none;background:linear-gradient(105deg,transparent 40%,rgba(255,235,190,.12) 50%,transparent 60%);transform:translateX(-120%);animation:flare var(--dur,8s) ease-in-out both}
 @keyframes flare{from{transform:translateX(-120%)}to{transform:translateX(120%)}}
 .vig{position:absolute;inset:0;z-index:3;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.65))}
-.cap{position:absolute;z-index:6;top:calc(8.5% + 14px);left:20px;font-family:var(--font-type);font-size:clamp(.66rem,1.5vw,.95rem);letter-spacing:.14em;color:#e6c477;background:rgba(0,0,0,.72);padding:3px 10px;white-space:nowrap;overflow:hidden;max-width:calc(var(--n)*1ch + 3ch);animation:type 1.5s steps(var(--n)) .3s both;border-left:3px solid var(--accent)}
-@keyframes type{from{max-width:0}}
+.cap{position:absolute;z-index:6;top:calc(8.5% + 14px);left:20px;font-family:var(--font-type);font-size:clamp(.66rem,1.5vw,.95rem);letter-spacing:.14em;color:#e6c477;background:rgba(0,0,0,.72);padding:3px 12px;white-space:nowrap;animation:type 1.5s steps(var(--n)) .3s both;border-left:3px solid var(--accent)}
+@keyframes type{from{clip-path:inset(0 100% 0 0)}to{clip-path:inset(0 0 0 0)}}
 .subs{position:absolute;z-index:6;left:50%;bottom:calc(8.5% + 12px);transform:translateX(-50%);width:min(92%,880px);text-align:center}
 .subs .who{display:table;margin:0 auto 4px;background:rgba(0,0,0,.82);padding:1px 10px;font-family:var(--font-display);font-weight:800;letter-spacing:.14em;text-transform:uppercase;font-size:clamp(.78rem,1.7vw,1.05rem);color:#e6c477;animation:fade .5s ease both .2s}
 .subs .line{display:inline;background:rgba(0,0,0,.74);padding:2px 8px;font-size:clamp(.92rem,2.3vw,1.4rem);line-height:1.7;-webkit-box-decoration-break:clone;box-decoration-break:clone;color:#fff}
@@ -311,6 +320,12 @@ button:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
 .lower b{display:block;font-family:var(--font-display);font-weight:900;font-size:clamp(1.3rem,3.4vw,2.4rem);text-transform:uppercase;letter-spacing:.04em;line-height:1;color:#fff}
 .lower span{font-size:.8rem;color:#e6c477;letter-spacing:.08em;text-transform:uppercase}
 @keyframes lowerin{from{transform:translateX(100%);opacity:0}}
+.eyes{position:absolute;inset:0;z-index:6;display:grid;place-content:center;text-align:center;gap:10px;font-family:var(--font-type);color:#d8b768}
+.eyes p{margin:0;letter-spacing:.3em;font-size:clamp(.66rem,1.6vw,.95rem);animation:fade .8s ease .2s both}
+.eyes h3{margin:0;font-family:var(--font-display);font-weight:900;font-size:clamp(2.4rem,9vw,6rem);letter-spacing:.12em;color:#ff4a3a;border:4px solid #ff4a3a;padding:0 22px;transform:rotate(-4deg);text-shadow:0 0 24px rgba(255,74,58,.6);animation:stampin .5s cubic-bezier(.2,1.4,.4,1) .9s both}
+.eyes .typed{color:#f3ead2;animation:type 1.6s steps(32) 1.5s both}
+.eyes .load{width:min(60vw,320px);height:3px;margin:6px auto 0;background:#2a2e38;overflow:hidden}
+.eyes .load i{display:block;height:100%;background:#d8b768;animation:prog 2.6s ease-in-out .6s both;transform-origin:left}
 .prog{position:absolute;z-index:7;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.12)}
 .prog i{display:block;height:100%;width:100%;background:var(--brass);transform-origin:left;animation:prog linear both}
 @keyframes prog{from{transform:scaleX(0)}}

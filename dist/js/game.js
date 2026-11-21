@@ -91,7 +91,7 @@ function notebook(){
   const n = S.clues.length;
   return `<aside class="notebook">
     <div class="nbtop">${clockView()}<div class="nbinfo"><span class="label">Mission board</span><b>${n}</b> <span class="sm">clue${n===1?'':'s'} filed</span><span class="sm">${S.path.length-1} move${S.path.length===2?'':'s'} made</span></div></div>
-    <div><div class="label">Case map</div><div class="mapbox">${mapSvg()}</div>
+    <div><div class="label">Case map</div><div class="mapbox" data-k="${S.path.join('>')}">${mapSvg()}</div>
     <div class="legend"><span><i class="lg-here"></i>You are here</span><span><i class="lg-vis"></i>Visited</span><span><i class="lg-new"></i>Unexplored</span></div></div>
   </aside>`;
 }
@@ -226,15 +226,24 @@ function endingView(){
     <div class="row"><button class="go" data-a="restart">Investigate again</button><button class="go alt" data-a="replay">Watch the briefing film</button></div>
     </div></section>`;
 }
+let lastKey = '';
 function render(){
-  const sy = window.scrollY;
   let h = header();
   if(S.screen==='title') h += titleView();
   else if(S.screen==='intro') h += introView();
   else if(S.screen==='play') h += sceneView();
   else h += endingView();
   const app = document.getElementById('app'), dock = document.getElementById('dock');
-  app.innerHTML = h;
+  /* Same screen and scene: swap only the parts that changed, so the scene art and
+     map keep animating instead of restarting on every click. */
+  const key = [S.screen, S.scene, S.accused].join('|');
+  if(key===lastKey && S.screen!=='intro' && app.querySelector('.sheet > .inner')){
+    const t = document.createElement('template'); t.innerHTML = h;
+    ['header.top', '.sheet > .inner', '.notebook .nbtop'].forEach(sel=>{ const a = app.querySelector(sel), b = t.content.querySelector(sel); if(a && b) a.replaceWith(b); });
+    const am = app.querySelector('.notebook .mapbox'), bm = t.content.querySelector('.notebook .mapbox');
+    if(am && bm && am.dataset.k!==bm.dataset.k) am.replaceWith(bm);
+  } else app.innerHTML = h;
+  lastKey = key;
   const old = dock.querySelector('.deck'), sl = old ? old.scrollLeft : 0;
   dock.innerHTML = dockView();
   const dk = dock.querySelector('.deck'); if(dk){ dk.scrollLeft = S.newClue ? dk.scrollWidth : sl; }
